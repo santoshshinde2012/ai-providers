@@ -21,6 +21,8 @@ export interface ModelInfo {
 }
 export interface CatalogProvider {
     readonly id: string;
+    readonly label?: string;
+    readonly default_model?: string;
     readonly models?: readonly ModelInfo[];
 }
 /** Host-supplied catalog port. This package ships no model list. */

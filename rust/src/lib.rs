@@ -1,11 +1,13 @@
 //! Canonical OpenAI-compatible protocol, Anthropic schema sanitization,
-//! and sanitized provider errors. This crate does not perform HTTP or
-//! store keys; a host supplies transport and catalogs.
+//! sanitized provider errors, and host-injected catalog parsing. This crate
+//! does not perform HTTP or store keys; a host supplies transport and catalogs.
 
+mod catalog;
 mod errors;
 mod protocol;
 mod schema;
 
+pub use catalog::{capability_label, CatalogProvider, ModelInfo, ProviderCatalog};
 pub use errors::{
     normalize_provider_error, redact_secrets, sanitized_provider_error, ProviderError,
 };

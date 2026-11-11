@@ -5,8 +5,13 @@ import {
   PROVIDER_IDS,
   anthropicOutputConfig,
   capabilities,
+  catalogAllowsModel,
   catalogFrom,
+  defaultModel,
+  modelEffort,
   modelsFromCatalog,
+  parseCatalog,
+  providerLabel,
   normalizeProviderError,
   redactSecrets,
   sanitizeAnthropicSchema,
@@ -88,4 +93,25 @@ test('catalog model listing is passed through unchanged', () => {
   assert.deepEqual(catalogFrom(catalog).modelsFor('anthropic'), [
     {id: 'claude-opus-5-5', effort: 'low'},
   ]);
+});
+
+test('host catalog parsing exposes labels, defaults, and effort without shipping a model list', async () => {
+  const {readFile} = await import('node:fs/promises');
+  const json = await readFile(new URL('./fixtures/host-catalog.json', import.meta.url), 'utf8');
+  const catalog = parseCatalog(json);
+  assert.equal(providerLabel(catalog, 'anthropic'), 'Anthropic');
+  assert.equal(providerLabel(catalog, 'google'), 'Google Gemini');
+  assert.equal(providerLabel([], 'not-a-provider'), '');
+  assert.equal(defaultModel(catalog, 'anthropic'), 'claude-opus-5-5');
+  assert.equal(defaultModel(catalog, 'google'), '');
+  assert.equal(modelEffort(catalog, 'openai', 'gpt-5.2'), 'low');
+  assert.equal(modelEffort(catalog, 'openai', 'gpt-4.1'), undefined);
+  assert.equal(catalogAllowsModel(catalog, 'anthropic', 'claude-opus-5-5'), true);
+  assert.equal(
+    catalogAllowsModel(catalog, 'anthropic', 'claude-legacy-host', {legacyAnthropic: true}),
+    true,
+  );
+  assert.equal(catalogAllowsModel(catalog, 'anthropic', 'claude-legacy-host'), false);
+  assert.equal(catalogAllowsModel(catalog, 'openai', 'openrouter/auto'), false);
+  assert.throws(() => parseCatalog('{"id":"anthropic"}'), /catalog must be an array/);
 });

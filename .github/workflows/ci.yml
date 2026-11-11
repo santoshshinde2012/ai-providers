@@ -7,7 +7,7 @@ on:
   pull_request:
 
 # Lightweight checks only. No live provider calls and no secret access.
-# cargo test is documented for local use so this workflow stays within a small Actions budget.
+# Node tests plus a locked cargo test for the mirrored Rust crate.
 permissions:
   contents: read
 
@@ -27,3 +27,5 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: git diff --exit-code -- dist
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --locked

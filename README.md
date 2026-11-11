@@ -7,10 +7,10 @@ The package does not send HTTP and does not store keys. A host application suppl
 ## Install
 
 ```sh
-npm install github:santoshshinde2012/ai-providers#v0.1.0
+npm install github:santoshshinde2012/ai-providers#v0.1.1
 ```
 
-The `v0.1.0` tag is the supported pin. The compiled `dist/` tree is included so a git dependency does not need a local TypeScript build. A host must bundle the package into its own application if it ships as a desktop or offline product; this library is not a hosted service.
+The `v0.1.1` tag is the supported pin. The compiled `dist/` tree is included so a git dependency does not need a local TypeScript build. A host must bundle the package into its own application if it ships as a desktop or offline product; this library is not a hosted service.
 
 ## Usage
 
@@ -24,6 +24,13 @@ import {
 
 const upstream = toUpstream('anthropic', request, {apiKey, version});
 // The host transport sends upstream.url, upstream.headers and upstream.body.
+```
+
+```js
+import {parseCatalog, providerLabel, defaultModel} from 'ai-providers';
+
+const catalog = parseCatalog(hostJson); // host-owned JSON, never shipped by this package
+providerLabel(catalog, 'anthropic');
 ```
 
 `toUpstream` may place a caller-supplied key in a header. It never writes the key into the JSON body. Errors are normalized to `{provider, type, message, status}` and reduced to type and message only on the wire.
@@ -46,7 +53,8 @@ UpstreamRequest          sanitized errors (type + message only)
 - **Protocol** (`src/protocol.ts`): the only request shape adapters accept.
 - **Ports** (`src/ports.ts`): `ProviderAdapter`, `ModelCatalog`, `ErrorNormalizer`, `CapabilityLookup`.
 - **Adapters** (`src/adapters/`): one strategy per provider. A new provider is a new module registered in the adapter map.
-- **Capabilities** (`src/capabilities.ts`): static descriptors. Model listing is injected by the host with `modelsFromCatalog` or `catalogFrom`.
+- **Capabilities** (`src/capabilities.ts`): static descriptors (ids, labels, upstream shapes).
+- **Catalog** (`src/catalog.ts`): parse a host-supplied catalog JSON document. This package does not ship a model list. Use `parseCatalog`, `providerLabel`, `modelsFromCatalog`, or `catalogFrom`.
 - **Schema / errors**: Anthropic schema rewrite and secret-redacting error sanitization.
 
 A later transport (loopback sidecar, in-process client, or another HTTP stack) can sit behind the same port without changing the adapters.
@@ -56,7 +64,10 @@ A later transport (loopback sidecar, in-process client, or another HTTP stack) c
 `Cargo.toml` defines a small `ai-providers` crate that mirrors the protocol constants, Anthropic schema rewrite, and sanitized error helpers.
 
 ```rust
-use ai_providers::{sanitize_anthropic_schema, sanitized_provider_error, PROVIDER_IDS};
+use ai_providers::{ProviderCatalog, sanitize_anthropic_schema, PROVIDER_IDS};
+
+let catalog = ProviderCatalog::from_json(host_json)?;
+let label = catalog.provider_label("anthropic");
 ```
 
 ## Test
