@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] - 2026-11-12
+
+### Added
+
+- Browser-safe subpath exports `ai-providers/protocol`, `ai-providers/capabilities`, and `ai-providers/catalog`. These modules do not import Node builtins, so a web host can depend on ids, labels, and host-catalog helpers without pulling `Buffer` or error sanitization into the bundle.
+
+[0.1.2]: https://github.com/santoshshinde2012/ai-providers/releases/tag/v0.1.2
+
 ## [0.1.1] - 2026-11-12
 
 ### Added

@@ -7,10 +7,10 @@ The package does not send HTTP and does not store keys. A host application suppl
 ## Install
 
 ```sh
-npm install github:santoshshinde2012/ai-providers#v0.1.1
+npm install github:santoshshinde2012/ai-providers#v0.1.2
 ```
 
-The `v0.1.1` tag is the supported pin. The compiled `dist/` tree is included so a git dependency does not need a local TypeScript build. A host must bundle the package into its own application if it ships as a desktop or offline product; this library is not a hosted service.
+The `v0.1.2` tag is the supported pin. The compiled `dist/` tree is included so a git dependency does not need a local TypeScript build. A host must bundle the package into its own application if it ships as a desktop or offline product; this library is not a hosted service.
 
 ## Usage
 
@@ -26,8 +26,12 @@ const upstream = toUpstream('anthropic', request, {apiKey, version});
 // The host transport sends upstream.url, upstream.headers and upstream.body.
 ```
 
+A browser host should import `ai-providers/protocol` and `ai-providers/capabilities` (and, if needed, `ai-providers/catalog`). Those entry points do not use Node builtins. The root `ai-providers` entry remains for Node hosts that also need adapters and sanitized errors.
+
 ```js
-import {parseCatalog, providerLabel, defaultModel} from 'ai-providers';
+import {PROVIDER_IDS} from 'ai-providers/protocol';
+import {PROVIDER_CAPABILITIES} from 'ai-providers/capabilities';
+import {parseCatalog, providerLabel} from 'ai-providers/catalog';
 
 const catalog = parseCatalog(hostJson); // host-owned JSON, never shipped by this package
 providerLabel(catalog, 'anthropic');

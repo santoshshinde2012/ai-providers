@@ -115,3 +115,17 @@ test('host catalog parsing exposes labels, defaults, and effort without shipping
   assert.equal(catalogAllowsModel(catalog, 'openai', 'openrouter/auto'), false);
   assert.throws(() => parseCatalog('{"id":"anthropic"}'), /catalog must be an array/);
 });
+
+test('protocol, capabilities, and catalog subpaths stay free of Node builtins', async () => {
+  const {readFile} = await import('node:fs/promises');
+  for (const name of ['protocol', 'capabilities', 'catalog']) {
+    const source = await readFile(new URL(`../dist/${name}.js`, import.meta.url), 'utf8');
+    assert.equal(source.includes('node:buffer'), false, `${name} imports node:buffer`);
+    assert.equal(source.includes("from 'node:"), false, `${name} imports a Node builtin`);
+    assert.equal(source.includes('from "node:'), false, `${name} imports a Node builtin`);
+  }
+  const {PROVIDER_IDS} = await import('../dist/protocol.js');
+  const {PROVIDER_CAPABILITIES, capabilities} = await import('../dist/capabilities.js');
+  assert.equal(capabilities('anthropic').label, 'Anthropic');
+  assert.equal(PROVIDER_CAPABILITIES.anthropic.id, PROVIDER_IDS[0]);
+});
