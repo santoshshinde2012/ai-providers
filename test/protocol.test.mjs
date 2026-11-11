@@ -5,13 +5,13 @@ import {
   PROVIDER_IDS,
   anthropicOutputConfig,
   capabilities,
+  catalogFrom,
   modelsFromCatalog,
   normalizeProviderError,
   redactSecrets,
   sanitizeAnthropicSchema,
   sanitizedProviderError,
-  toUpstream,
-} from '../src/index.mjs';
+} from '../dist/index.js';
 
 const schema = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -25,22 +25,10 @@ const schema = {
   required: ['ok'],
 };
 
-const request = {
-  model: 'claude-opus-5-5',
-  max_tokens: 256,
-  messages: [
-    {role: 'system', content: 'Return the schema only.'},
-    {role: 'user', content: 'Ping.'},
-  ],
-  response_format: {type: 'json_schema', json_schema: {name: 'connection_check', strict: true, schema}},
-  reasoning_effort: 'low',
-  stream: false,
-};
-
 test('canonical protocol is OpenAI-compatible structured chat', () => {
   assert.equal(CANONICAL_PROTOCOL.path, '/v1/chat/completions');
   assert.equal(CANONICAL_PROTOCOL.structuredOutput, 'response_format.json_schema');
-  assert.deepEqual(PROVIDER_IDS, ['anthropic', 'openai', 'google', 'openrouter']);
+  assert.deepEqual([...PROVIDER_IDS], ['anthropic', 'openai', 'google', 'openrouter']);
   for (const id of PROVIDER_IDS) {
     const caps = capabilities(id);
     assert.equal(caps.protocol, 'openai-chat-completions');
@@ -61,14 +49,17 @@ test('Anthropic schema rewrites oneOf and type arrays to anyOf', () => {
 });
 
 test('errors keep only sanitized type and message, never keys or raw bodies', () => {
-  const body = Buffer.from(JSON.stringify({
-    error: {
-      type: 'invalid_request_error',
-      message: 'anthropic error: type arrays must use anyOf. sk-ant-synthetic-secret-do-not-keep is not a valid field',
-      request_id: 'req_should_not_leak',
-      raw_body: '{"secret":true}',
-    },
-  }));
+  const body = Buffer.from(
+    JSON.stringify({
+      error: {
+        type: 'invalid_request_error',
+        message:
+          'anthropic error: type arrays must use anyOf. sk-ant-synthetic-secret-do-not-keep is not a valid field',
+        request_id: 'req_should_not_leak',
+        raw_body: '{"secret":true}',
+      },
+    }),
+  );
   const normalized = normalizeProviderError(400, body, 'anthropic');
   assert.deepEqual(normalized, {
     provider: 'anthropic',
@@ -82,27 +73,19 @@ test('errors keep only sanitized type and message, never keys or raw bodies', ()
   assert.equal(wire.error.message.includes('sk-ant-'), false);
   assert.equal(JSON.stringify(wire).includes('request_id'), false);
   assert.equal(JSON.stringify(wire).includes('raw_body'), false);
-  assert.equal(redactSecrets('Bearer abc.def and sk-abcdefghijklmnopqrstuvwxyz'), '[redacted] and [redacted]');
-});
-
-test('Anthropic adapter produces the exact native structured-output body', () => {
-  const upstream = toUpstream('anthropic', request, {apiKey: 'sk-ant-test-key-not-used-live'});
-  assert.equal(upstream.url, 'https://api.anthropic.com/v1/messages');
-  assert.equal(upstream.headers['anthropic-version'], '2026-10-21');
-  assert.deepEqual(upstream.body.output_config, anthropicOutputConfig(request));
-  assert.deepEqual(upstream.body.output_config.format.schema, sanitizeAnthropicSchema(schema));
-  assert.equal(upstream.body.output_config.effort, 'low');
-  assert.equal('temperature' in upstream.body, false);
-  assert.equal('stream' in upstream.body, false);
-  assert.equal('response_format' in upstream.body, false);
-  assert.equal('reasoning_effort' in upstream.body, false);
-  assert.deepEqual(upstream.body.system, [{type: 'text', text: 'Return the schema only.'}]);
-  // The key is only in the constructed header, never in the body.
-  assert.equal(JSON.stringify(upstream.body).includes('sk-ant-'), false);
+  assert.equal(
+    redactSecrets('Bearer abc.def and sk-abcdefghijklmnopqrstuvwxyz'),
+    '[redacted] and [redacted]',
+  );
 });
 
 test('catalog model listing is passed through unchanged', () => {
   const catalog = [{id: 'anthropic', models: [{id: 'claude-opus-5-5', effort: 'low'}]}];
-  assert.deepEqual(modelsFromCatalog(catalog, 'anthropic'), [{id: 'claude-opus-5-5', effort: 'low'}]);
+  assert.deepEqual(modelsFromCatalog(catalog, 'anthropic'), [
+    {id: 'claude-opus-5-5', effort: 'low'},
+  ]);
   assert.deepEqual(modelsFromCatalog(catalog, 'openai'), []);
+  assert.deepEqual(catalogFrom(catalog).modelsFor('anthropic'), [
+    {id: 'claude-opus-5-5', effort: 'low'},
+  ]);
 });

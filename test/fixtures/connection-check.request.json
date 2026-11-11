@@ -1,0 +1,100 @@
+{
+  "schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "title": "check",
+    "properties": {
+      "ok": {
+        "type": "boolean"
+      },
+      "note": {
+        "type": ["string", "null"],
+        "description": "optional"
+      },
+      "choice": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      }
+    },
+    "required": ["ok"]
+  },
+  "requests": {
+    "anthropic": {
+      "model": "claude-opus-5-5",
+      "options": {
+        "apiKey": "sk-ant-test-key-not-used-live"
+      }
+    },
+    "openai": {
+      "model": "gpt-5",
+      "options": {
+        "apiKey": "sk-test-key-not-used-live"
+      }
+    },
+    "google": {
+      "model": "gemini-2.5-pro",
+      "options": {
+        "apiKey": "test-google-key-not-used-live"
+      }
+    },
+    "openrouter": {
+      "model": "anthropic/claude-opus-5-5",
+      "options": {
+        "apiKey": "sk-or-test-key-not-used-live"
+      }
+    }
+  },
+  "canonical": {
+    "max_tokens": 256,
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return the schema only."
+      },
+      {
+        "role": "user",
+        "content": "Ping."
+      }
+    ],
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "connection_check",
+        "strict": true,
+        "schema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "title": "check",
+          "properties": {
+            "ok": {
+              "type": "boolean"
+            },
+            "note": {
+              "type": ["string", "null"],
+              "description": "optional"
+            },
+            "choice": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          },
+          "required": ["ok"]
+        }
+      }
+    },
+    "reasoning_effort": "low",
+    "stream": false
+  }
+}

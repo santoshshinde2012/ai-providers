@@ -1,0 +1,55 @@
+{
+  "url": "https://api.openai.com/v1/chat/completions",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer sk-test-key-not-used-live"
+  },
+  "body": {
+    "model": "gpt-5",
+    "max_completion_tokens": 256,
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return the schema only."
+      },
+      {
+        "role": "user",
+        "content": "Ping."
+      }
+    ],
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "connection_check",
+        "strict": true,
+        "schema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "title": "check",
+          "properties": {
+            "ok": {
+              "type": "boolean"
+            },
+            "note": {
+              "type": ["string", "null"],
+              "description": "optional"
+            },
+            "choice": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          },
+          "required": ["ok"]
+        }
+      }
+    },
+    "stream": false,
+    "reasoning_effort": "low"
+  }
+}

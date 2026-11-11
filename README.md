@@ -1,7 +1,73 @@
-# @meridian/ai-providers
+# ai-providers
 
-Internal protocol layer for Meridian's four direct model providers (Anthropic, OpenAI, Google Gemini, and OpenRouter).
+Canonical OpenAI-compatible protocol and per-provider strategy adapters for structured-output chat.
 
-The canonical request/response shape is OpenAI-compatible chat completions with `response_format.json_schema`. Each adapter is a strategy that translates that shape into the provider's native structured-output API. Errors are normalized to `{provider, type, message, status}` and reduced to type and message only on the wire. Keys, raw bodies, headers and request ids are never forwarded.
+The package does not send HTTP and does not store keys. A host application supplies a transport and, optionally, a model catalog.
 
-This package does not send HTTP and does not hold keys. The bundled, source-pinned Portkey gateway remains the loopback transport behind this port, so the existing HMAC pairing, fetch allow-list and Rust client stay unchanged. The port is the swap point if that transport is replaced later (for example with the Vercel AI SDK). See [ADR 0002](../../docs/adr/0002-ai-provider-client.md).
+## Install
+
+```sh
+npm install github:santoshshinde2012/ai-providers#v0.1.0
+```
+
+The `v0.1.0` tag is the supported pin. The compiled `dist/` tree is included so a git dependency does not need a local TypeScript build. A host must bundle the package into its own application if it ships as a desktop or offline product; this library is not a hosted service.
+
+## Usage
+
+```js
+import {
+  toUpstream,
+  sanitizeAnthropicSchema,
+  sanitizedProviderError,
+  modelsFromCatalog,
+} from 'ai-providers';
+
+const upstream = toUpstream('anthropic', request, {apiKey, version});
+// The host transport sends upstream.url, upstream.headers and upstream.body.
+```
+
+`toUpstream` may place a caller-supplied key in a header. It never writes the key into the JSON body. Errors are normalized to `{provider, type, message, status}` and reduced to type and message only on the wire.
+
+## Architecture
+
+```
+Canonical protocol (OpenAI-compatible chat + response_format.json_schema)
+        │
+        ▼
+ProviderAdapter port (toUpstream)
+   ┌────┼────┬─────────┐
+   ▼    ▼    ▼         ▼
+Anthropic  OpenAI  Google  OpenRouter
+        │
+        ▼
+UpstreamRequest          sanitized errors (type + message only)
+```
+
+- **Protocol** (`src/protocol.ts`): the only request shape adapters accept.
+- **Ports** (`src/ports.ts`): `ProviderAdapter`, `ModelCatalog`, `ErrorNormalizer`, `CapabilityLookup`.
+- **Adapters** (`src/adapters/`): one strategy per provider. A new provider is a new module registered in the adapter map.
+- **Capabilities** (`src/capabilities.ts`): static descriptors. Model listing is injected by the host with `modelsFromCatalog` or `catalogFrom`.
+- **Schema / errors**: Anthropic schema rewrite and secret-redacting error sanitization.
+
+A later transport (loopback sidecar, in-process client, or another HTTP stack) can sit behind the same port without changing the adapters.
+
+## Rust
+
+`Cargo.toml` defines a small `ai-providers` crate that mirrors the protocol constants, Anthropic schema rewrite, and sanitized error helpers.
+
+```rust
+use ai_providers::{sanitize_anthropic_schema, sanitized_provider_error, PROVIDER_IDS};
+```
+
+## Test
+
+```sh
+npm test
+cargo test --locked
+```
+
+Contract tests compare `toUpstream` output for each provider against recorded fixtures in `test/fixtures/`. They never make a network call or read a live key.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).

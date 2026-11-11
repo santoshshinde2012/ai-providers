@@ -1,6 +1,27 @@
-// Static capability descriptors. Model listing stays in the shared catalog
-// compiled into both Rust and the gateway (sidecars/gateway/src/provider-catalog.json).
-export const PROVIDER_CAPABILITIES = Object.freeze({
+/** Static capability descriptors. Model lists come from the host catalog. */
+import type {CatalogProvider, ModelInfo} from './ports.js';
+import {type ProviderId, isProviderId} from './protocol.js';
+
+export interface ProviderCapabilities {
+  readonly id: ProviderId;
+  readonly label: string;
+  readonly protocol: 'openai-chat-completions';
+  readonly structuredOutput: 'native';
+  readonly nativeStructuredOutput: string;
+  readonly schemaProfile: 'anthropic' | 'openai' | 'google' | 'openai-compatible';
+  readonly streaming: false;
+  readonly toolCalling: false;
+  readonly modelListing: 'catalog';
+  readonly effortField: string | null;
+  readonly defaultVersion?: string;
+  readonly vendorPinning?: boolean;
+  readonly upstream: {
+    readonly origin: string;
+    readonly path: string;
+  };
+}
+
+export const PROVIDER_CAPABILITIES: Record<ProviderId, ProviderCapabilities> = Object.freeze({
   anthropic: Object.freeze({
     id: 'anthropic',
     label: 'Anthropic',
@@ -39,7 +60,10 @@ export const PROVIDER_CAPABILITIES = Object.freeze({
     toolCalling: false,
     modelListing: 'catalog',
     effortField: null,
-    upstream: Object.freeze({origin: 'https://generativelanguage.googleapis.com', path: '/v1beta/models/{model}:generateContent'}),
+    upstream: Object.freeze({
+      origin: 'https://generativelanguage.googleapis.com',
+      path: '/v1beta/models/{model}:generateContent',
+    }),
   }),
   openrouter: Object.freeze({
     id: 'openrouter',
@@ -57,11 +81,14 @@ export const PROVIDER_CAPABILITIES = Object.freeze({
   }),
 });
 
-export function capabilities(provider) {
-  return PROVIDER_CAPABILITIES[provider] ?? null;
+export function capabilities(provider: string): ProviderCapabilities | null {
+  return isProviderId(provider) ? PROVIDER_CAPABILITIES[provider] : null;
 }
 
-export function modelsFromCatalog(catalog, provider) {
+export function modelsFromCatalog(
+  catalog: readonly CatalogProvider[] | null | undefined,
+  provider: string,
+): readonly ModelInfo[] {
   const entry = (catalog ?? []).find((item) => item.id === provider);
   return entry?.models ?? [];
 }

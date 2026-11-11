@@ -1,0 +1,59 @@
+{
+  "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent",
+  "headers": {
+    "Content-Type": "application/json",
+    "x-goog-api-key": "test-google-key-not-used-live"
+  },
+  "body": {
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Ping."
+          }
+        ]
+      }
+    ],
+    "systemInstruction": {
+      "parts": [
+        {
+          "text": "Return the schema only."
+        }
+      ]
+    },
+    "generationConfig": {
+      "maxOutputTokens": 256,
+      "responseFormat": {
+        "text": {
+          "mimeType": "APPLICATION_JSON",
+          "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "title": "check",
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "note": {
+                "type": ["string", "null"],
+                "description": "optional"
+              },
+              "choice": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            },
+            "required": ["ok"]
+          }
+        }
+      }
+    }
+  }
+}

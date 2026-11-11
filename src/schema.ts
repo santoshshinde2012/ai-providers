@@ -1,5 +1,4 @@
-// Rewrite a JSON Schema into the subset Anthropic structured outputs accept.
-// Unsupported features otherwise return HTTP 400. This is a pure transform.
+/** Rewrite a JSON Schema into the subset Anthropic structured outputs accept. */
 const STRIP = new Set([
   '$schema',
   '$id',
@@ -20,11 +19,11 @@ const STRIP = new Set([
   'prefixItems',
 ]);
 
-export function sanitizeAnthropicSchema(value) {
-  if (Array.isArray(value)) return value.map(sanitizeAnthropicSchema);
+export function sanitizeAnthropicSchema(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map((item) => sanitizeAnthropicSchema(item));
   if (!value || typeof value !== 'object') return value;
-  const input = value;
-  const out = {};
+  const input = value as Record<string, unknown>;
+  let out: Record<string, unknown> = {};
   for (const [key, child] of Object.entries(input)) {
     if (STRIP.has(key)) continue;
     if (key === 'oneOf') {
@@ -34,12 +33,13 @@ export function sanitizeAnthropicSchema(value) {
     out[key] = sanitizeAnthropicSchema(child);
   }
   if (Array.isArray(out.type)) {
-    const types = out.type.filter((item) => typeof item === 'string');
-    delete out.type;
+    const types = out.type.filter((item): item is string => typeof item === 'string');
     const rest = {...out};
+    delete rest.type;
     delete rest.anyOf;
-    out.anyOf = types.map((item) => item === 'null' ? {type: 'null'} : {type: item, ...rest});
-    for (const key of Object.keys(rest)) delete out[key];
+    out = {
+      anyOf: types.map((item) => (item === 'null' ? {type: 'null'} : {type: item, ...rest})),
+    };
   }
   if (out.type === 'object' || (out.properties && out.additionalProperties === undefined)) {
     out.additionalProperties = false;
