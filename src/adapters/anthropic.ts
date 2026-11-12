@@ -11,7 +11,6 @@ function workspaceHeader(workspaceId: string | undefined): Record<string, string
   return value ? {'anthropic-workspace-id': value} : {};
 }
 
-
 export function anthropicOutputConfig(request: CanonicalChatRequest) {
   return {
     format: {
@@ -31,7 +30,7 @@ export const anthropicAdapter: ProviderAdapter = {
         'Content-Type': 'application/json',
         'X-API-Key': options.apiKey ?? '',
         'anthropic-version': options.version ?? caps.defaultVersion ?? '2026-10-21',
-        ...(workspaceHeader(options.workspaceId)),
+        ...workspaceHeader(options.workspaceId),
       },
       body: {
         model: request.model,
