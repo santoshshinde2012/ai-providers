@@ -22,7 +22,8 @@ import {
   modelsFromCatalog,
 } from 'ai-providers';
 
-const upstream = toUpstream('anthropic', request, {apiKey, version});
+const upstream = toUpstream('anthropic', request, {apiKey, version, workspaceId});
+// workspaceId is optional; when set, Anthropic requests include anthropic-workspace-id.
 // The host transport sends upstream.url, upstream.headers and upstream.body.
 ```
 

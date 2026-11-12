@@ -4,6 +4,8 @@ import type { ProviderCapabilities } from './capabilities.js';
 export interface AdapterOptions {
     readonly apiKey?: string;
     readonly version?: string;
+    /** Non-secret Anthropic workspace. When set, sent as anthropic-workspace-id. */
+    readonly workspaceId?: string;
 }
 export interface UpstreamRequest {
     readonly url: string;
