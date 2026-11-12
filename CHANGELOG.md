@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows [Semantic Versioning](https://semver.org/).
 
+## [0.1.3] - 2026-11-12
+
+### Added
+
+- Optional `workspaceId` on Anthropic `AdapterOptions`. When set (non-empty, trimmed), the adapter sends an `anthropic-workspace-id` header. The header is omitted when the id is missing or blank. This is not a secret and is not written into the request body.
+
+[0.1.3]: https://github.com/santoshshinde2012/ai-providers/releases/tag/v0.1.3
+
 ## [0.1.2] - 2026-11-12
 
 ### Added

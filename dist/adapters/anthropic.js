@@ -2,6 +2,10 @@ import { PROVIDER_CAPABILITIES } from '../capabilities.js';
 import { sanitizeAnthropicSchema } from '../schema.js';
 import { messagesWithRole } from './messages.js';
 const caps = PROVIDER_CAPABILITIES.anthropic;
+function workspaceHeader(workspaceId) {
+    const value = workspaceId?.trim();
+    return value ? { 'anthropic-workspace-id': value } : {};
+}
 export function anthropicOutputConfig(request) {
     return {
         format: {
@@ -20,6 +24,7 @@ export const anthropicAdapter = {
                 'Content-Type': 'application/json',
                 'X-API-Key': options.apiKey ?? '',
                 'anthropic-version': options.version ?? caps.defaultVersion ?? '2026-10-21',
+                ...(workspaceHeader(options.workspaceId)),
             },
             body: {
                 model: request.model,

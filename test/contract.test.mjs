@@ -53,3 +53,20 @@ test('unknown provider is rejected without touching a transport', () => {
     {message: 'unsupported_provider'},
   );
 });
+
+test('anthropic workspaceId adds anthropic-workspace-id only when set', () => {
+  const {model, options} = recorded.requests.anthropic;
+  const request = {...recorded.canonical, model};
+  const without = toUpstream('anthropic', request, options);
+  assert.equal(without.headers['anthropic-workspace-id'], undefined);
+  const empty = toUpstream('anthropic', request, {...options, workspaceId: '  '});
+  assert.equal(empty.headers['anthropic-workspace-id'], undefined);
+  const withId = toUpstream('anthropic', request, {
+    ...options,
+    workspaceId: ' wrkspc_01EXAMPLEWORKSPACE ',
+  });
+  assert.equal(withId.headers['anthropic-workspace-id'], 'wrkspc_01EXAMPLEWORKSPACE');
+  assert.equal(withId.headers['anthropic-version'], without.headers['anthropic-version']);
+  assert.deepEqual(withId.body, without.body);
+  assert.equal(JSON.stringify(withId).includes('sk-ant-synthetic'), false);
+});
